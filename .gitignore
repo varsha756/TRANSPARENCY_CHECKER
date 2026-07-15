@@ -1,0 +1,16 @@
+# Database
+app.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Debug/dev scripts
+check_users.py
+
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+.streamlit/secrets.toml
