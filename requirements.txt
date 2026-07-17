@@ -2,3 +2,4 @@ streamlit
 streamlit-lottie
 requests
 bcrypt
+pdfplumber

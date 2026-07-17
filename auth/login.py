@@ -11,6 +11,8 @@ def login_page():
         if success:
             st.session_state["logged_in"] = True
             st.session_state["user"] = user
+            st.session_state["user_id"] = user["id"]
+            st.session_state["role"] = user["role"]
             st.success(f"Welcome back, {user['username']}!")
             st.rerun()
         else:

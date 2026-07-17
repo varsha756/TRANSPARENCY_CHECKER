@@ -4,25 +4,21 @@ import requests
 from config.database import init_db
 from auth.signup import signup_page
 from auth.login import login_page
-from streamlit_multipage.ngo_dashboard import ngo_dashboard
-from streamlit_multipage.donor_dashboard import donor_dashboard
-from streamlit_multipage.donor_report import donor_reports
 
-# --- Page config ---
+from streamlit_multipage.donor_dashboard import donor_dashboard
+
+# Page config
 st.set_page_config(page_title="Donation Transparency Checker", page_icon="🌍", layout="wide")
 
-# --- Initialize DB once ---
 if "db_initialized" not in st.session_state:
     init_db()
     st.session_state["db_initialized"] = True
 
-# --- Session defaults ---
 if "page" not in st.session_state:
     st.session_state.page = "home"
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# --- Cached Lottie loader ---
 @st.cache_data
 def load_lottieurl(url: str):
     try:
@@ -33,9 +29,6 @@ def load_lottieurl(url: str):
     except requests.exceptions.RequestException:
         return None
 
-# ======================================================
-# NOT LOGGED IN
-# ======================================================
 if not st.session_state.logged_in:
     st.markdown(
         """<style>[data-testid="stSidebar"] {display: none;}</style>""",
@@ -45,13 +38,10 @@ if not st.session_state.logged_in:
     if st.session_state.page == "home":
         st.title("🌍 Donation Transparency Checker")
         st.subheader("Welcome to the Transparency Platform")
-
         lottie_animation = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json")
         if lottie_animation:
             st_lottie(lottie_animation, height=250, key="donation")
-
         st.write("This tool helps you verify how donations are being used.")
-
         if st.button("➡️ Get Started"):
             st.session_state.page = "signup"
             st.rerun()
@@ -68,9 +58,6 @@ if not st.session_state.logged_in:
             st.session_state.page = "signup"
             st.rerun()
 
-# ======================================================
-# LOGGED IN
-# ======================================================
 else:
     user = st.session_state["user"]
     st.sidebar.title("Navigation")
@@ -87,10 +74,4 @@ else:
 
     st.divider()
 
-    if st.session_state["role"] == "ngo":
-        ngo_dashboard()
-    else:
-        if nav == "Search NGOs":
-            donor_dashboard()
-        else:
-            donor_reports()
+    
