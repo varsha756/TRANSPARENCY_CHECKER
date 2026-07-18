@@ -7,6 +7,7 @@ from auth.login import login_page
 from streamlit_multipage.ngo_dashboard import ngo_dashboard
 from streamlit_multipage.donor_dashboard import donor_dashboard
 from streamlit_multipage.donor_report import donor_reports
+from streamlit_multipage.market import market
 
 # --- Page config ---
 st.set_page_config(page_title="Donation Transparency Checker", page_icon="🌍", layout="wide")
@@ -79,7 +80,7 @@ else:
     if st.session_state["role"] == "ngo":
         nav = st.sidebar.radio("Go to", ["Dashboard", "Upload Report"])
     else:
-        nav = st.sidebar.radio("Go to", ["Search NGOs", "Reports"])
+        nav = st.sidebar.radio("Go to", ["Marketplace", "Search NGOs", "Reports"])
 
     if st.sidebar.button("Logout"):
         st.session_state.clear()
@@ -90,7 +91,9 @@ else:
     if st.session_state["role"] == "ngo":
         ngo_dashboard()
     else:
-        if nav == "Search NGOs":
+        if nav == "Marketplace":
+            market()
+        elif nav == "Search NGOs":
             donor_dashboard()
         else:
             donor_reports()
