@@ -4,6 +4,25 @@ from config.database import get_connection
 from services.pdf_service import extract_text_from_pdf
 from services.scoring_service import calculate_score
 from services.report_service import save_report_and_score, get_latest_score_for_org
+from services.news_service import get_ngo_news
+
+
+def render_news_sidebar():
+    st.sidebar.error("SIDEBAR FUNCTION IS RUNNING")   # temporary debug line
+    st.sidebar.subheader("📰 Latest NGO News")
+    ...
+    news_items = get_ngo_news()
+    if not news_items:
+        st.sidebar.info("No news available right now.")
+        return
+
+    for item in news_items:
+        st.sidebar.markdown(
+            f"**[{item['title']}]({item['url']})**  \n"
+            f"*{item['source']} · {item['published_at']}*"
+        )
+        st.sidebar.divider()
+
 
 def ngo_dashboard():
     # --- Access control ---
@@ -13,6 +32,8 @@ def ngo_dashboard():
             st.session_state.clear()
             st.rerun()
         st.stop()
+
+    render_news_sidebar()   # <-- actually call it now
 
     st.title("NGO Dashboard")
 
