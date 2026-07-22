@@ -6,8 +6,9 @@ def donor_reports():
         st.error("Access restricted to Donor accounts.")
         st.stop()
 
-    st.title("Your Reports")
-    st.subheader("Recently Viewed NGOs")
+    st.title("📊 Donor Dashboard")
+    st.metric("Total NGOs Viewed", 5)   # Replace with actual query counts
+    st.metric("Certificates Earned", 3) # Replace with actual donations
 
     donor_id = st.session_state["user_id"]
 
@@ -34,18 +35,25 @@ def donor_reports():
     for row in rows:
         row = dict(row)
         if row["name"] in seen:
-            continue  # avoid duplicate entries from repeated views
+            continue
         seen.add(row["name"])
 
-        with st.container():
-            st.markdown(f"### {row['name']}")
-            st.write(f"Registration No: {row.get('registration_number') or 'Not provided'}")
-            if row["transparency_score"] is not None:
-                st.metric("Transparency Score", f"{row['transparency_score']}/100")
-                if row["red_flags"]:
-                    st.warning("Red Flags:")
+        with st.container(border=True):
+            c1, c2 = st.columns([3,1])
+            with c1:
+                st.markdown(f"### {row['name']}")
+                st.write(f"Reg. No: {row.get('registration_number') or 'Not provided'}")
+            with c2:
+                if row["transparency_score"] is not None:
+                    st.metric("Score", f"{row['transparency_score']}/100")
+                else:
+                    st.info("No report yet")
+
+            if row["red_flags"]:
+                with st.expander("⚠️ Red Flags"):
                     for flag in row["red_flags"].split(", "):
                         st.write(f"- {flag}")
-            else:
-                st.info("No transparency report available yet for this NGO.")
+
+            st.download_button("Download Transparency Report", "report.pdf")
+            st.download_button("Download Certificate", "certificate.pdf")
             st.divider()

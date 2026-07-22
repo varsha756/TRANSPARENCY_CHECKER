@@ -5,12 +5,11 @@ from services.pdf_service import extract_text_from_pdf
 from services.scoring_service import calculate_score
 from services.report_service import save_report_and_score, get_latest_score_for_org
 from services.news_service import get_ngo_news
+from apicalls.ai_analyzer import analyze_report_with_ai
 
 
 def render_news_sidebar():
-    st.sidebar.error("SIDEBAR FUNCTION IS RUNNING")   # temporary debug line
     st.sidebar.subheader("📰 Latest NGO News")
-    ...
     news_items = get_ngo_news()
     if not news_items:
         st.sidebar.info("No news available right now.")
@@ -33,7 +32,7 @@ def ngo_dashboard():
             st.rerun()
         st.stop()
 
-    render_news_sidebar()   # <-- actually call it now
+    render_news_sidebar()
 
     st.title("NGO Dashboard")
 
@@ -67,10 +66,14 @@ def ngo_dashboard():
             f.write(uploaded_file.getbuffer())
 
         extracted_text = extract_text_from_pdf(uploaded_file)
-        score_data = calculate_score(extracted_text)
+
+        with st.spinner("Running AI transparency analysis..."):
+            score_data = analyze_report_with_ai(extracted_text)
 
         if save_report_and_score(org_id, user_id, file_path, extracted_text, score_data):
             st.success("Report analyzed and saved!")
+            if score_data.get("summary"):
+                st.info(score_data["summary"])
         else:
             st.error("Something went wrong saving the report.")
 

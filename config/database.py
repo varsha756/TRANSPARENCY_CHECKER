@@ -72,6 +72,19 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS donations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            donor_id INTEGER,
+            org_id INTEGER,
+            amount REAL NOT NULL,
+            category TEXT,
+            transaction_id TEXT UNIQUE,
+            donated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (donor_id) REFERENCES users(id),
+            FOREIGN KEY (org_id) REFERENCES organizations(id)
+        )
+    """)
     conn.commit()
     conn.close()
     print(f"[DB INIT] all tables ensured at: {DB_PATH}")

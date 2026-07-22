@@ -1,13 +1,19 @@
 import streamlit as st
 from streamlit_lottie import st_lottie
 import requests
+
+# --- Local imports ---
 from config.database import init_db
 from auth.signup import signup_page
 from auth.login import login_page
 from streamlit_multipage.ngo_dashboard import ngo_dashboard
-from streamlit_multipage.donor_dashboard import donor_dashboard
+from streamlit_multipage.donor_home import donor_home   # donor main dashboard
+from streamlit_multipage.donor_dashboard import donor_dashboard  # NGO search
 from streamlit_multipage.donor_report import donor_reports
 from streamlit_multipage.market import market
+from services.report_service import get_all_org_scores
+from streamlit_multipage.donation import donation
+
 
 # --- Page config ---
 st.set_page_config(page_title="Donation Transparency Checker", page_icon="🌍", layout="wide")
@@ -38,6 +44,7 @@ def load_lottieurl(url: str):
 # NOT LOGGED IN
 # ======================================================
 if not st.session_state.logged_in:
+    # Hide sidebar
     st.markdown(
         """<style>[data-testid="stSidebar"] {display: none;}</style>""",
         unsafe_allow_html=True
@@ -74,13 +81,15 @@ if not st.session_state.logged_in:
 # ======================================================
 else:
     user = st.session_state["user"]
-    st.sidebar.title("Navigation")
-    st.sidebar.write(f"Logged in as: **{user['username']}** ({st.session_state['role']})")
+    role = st.session_state["role"]
 
-    if st.session_state["role"] == "ngo":
+    st.sidebar.title("Navigation")
+    st.sidebar.write(f"Logged in as: **{user['username']}** ({role})")
+
+    if role == "ngo":
         nav = st.sidebar.radio("Go to", ["Dashboard", "Upload Report"])
     else:
-        nav = st.sidebar.radio("Go to", ["Marketplace", "Search NGOs", "Reports"])
+        nav = st.sidebar.radio("Go to", ["Dashboard", "Marketplace", "Search NGOs", "Reports"])
 
     if st.sidebar.button("Logout"):
         st.session_state.clear()
@@ -88,12 +97,20 @@ else:
 
     st.divider()
 
-    if st.session_state["role"] == "ngo":
-        ngo_dashboard()
+    # --- NGO Pages ---
+    if role == "ngo":
+        if nav == "Dashboard":
+            ngo_dashboard()
+        elif nav == "Upload Report":
+            st.write("📄 Upload report page coming soon...")
+
+    # --- Donor Pages ---
     else:
-        if nav == "Marketplace":
+        if nav == "Dashboard":
+            donor_home()        # donor’s main dashboard
+        elif nav == "Marketplace":
             market()
         elif nav == "Search NGOs":
-            donor_dashboard()
-        else:
+            donor_dashboard()   # NGO search + transparency scores
+        elif nav == "Reports":
             donor_reports()

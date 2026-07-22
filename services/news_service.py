@@ -7,7 +7,11 @@ load_dotenv()
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 BASE_URL = "https://newsapi.org/v2/everything"
 
-def get_ngo_news(query="NGO OR nonprofit OR charity", page_size=8):
+
+def get_ngo_news(
+    query='"NGO" OR "nonprofit" OR "charity" OR "NGO funding" OR "nonprofit transparency"',
+    page_size=8,
+):
     """
     Fetch latest NGO-related news articles.
     Returns a list of dicts: title, source, url, published_at
@@ -17,8 +21,10 @@ def get_ngo_news(query="NGO OR nonprofit OR charity", page_size=8):
 
     params = {
         "q": query,
+        "qInTitle": query,       # require the keyword to appear in the title,
+                                  # not just somewhere in the article body
         "language": "en",
-        "sortBy": "publishedAt",
+        "sortBy": "relevancy",   # filter for relevance first...
         "pageSize": page_size,
         "apiKey": NEWS_API_KEY,
     }
@@ -29,7 +35,7 @@ def get_ngo_news(query="NGO OR nonprofit OR charity", page_size=8):
         data = response.json()
         articles = data.get("articles", [])
 
-        return [
+        results = [
             {
                 "title": a["title"],
                 "source": a["source"]["name"],
@@ -39,5 +45,10 @@ def get_ngo_news(query="NGO OR nonprofit OR charity", page_size=8):
             for a in articles
             if a.get("title")
         ]
+
+        # ...then sort the relevant results by recency
+        results.sort(key=lambda x: x["published_at"], reverse=True)
+        return results
+
     except requests.exceptions.RequestException:
         return []
