@@ -61,7 +61,28 @@ def get_impact_breakdown(donor_id):
     rows = {r["category"]: r["total"] for r in cursor.fetchall()}
     conn.close()
     return rows
+def get_or_create_org_id(org_name):
+    """
+    Looks up an organization by name; if it doesn't exist yet (e.g. it's one
+    of the static marketplace demo entries with no DB row), creates a
+    minimal organization record so donations can reference a real org_id.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM organizations WHERE name = ?", (org_name,))
+    row = cursor.fetchone()
+    if row:
+        conn.close()
+        return row["id"]
 
+    cursor.execute(
+        "INSERT INTO organizations (name, verified) VALUES (?, 0)",
+        (org_name,)
+    )
+    conn.commit()
+    new_id = cursor.lastrowid
+    conn.close()
+    return new_id
 
 def get_donation_trend(donor_id):
     """Monthly totals for the trend line."""

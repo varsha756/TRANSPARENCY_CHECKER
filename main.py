@@ -99,18 +99,39 @@ else:
 
     # --- NGO Pages ---
     if role == "ngo":
+        nav = st.sidebar.radio("Go to", ["Dashboard", "Upload Report"])
         if nav == "Dashboard":
             ngo_dashboard()
         elif nav == "Upload Report":
             st.write("📄 Upload report page coming soon...")
 
-    # --- Donor Pages ---
     else:
-        if nav == "Dashboard":
-            donor_home()        # donor’s main dashboard
-        elif nav == "Marketplace":
+        donor_pages = ["Dashboard", "Marketplace", "Reports"]
+        all_pages = donor_pages + ["Search NGOs", "Donation"]
+
+        if "page" not in st.session_state or st.session_state.page not in all_pages:
+            st.session_state.page = "Dashboard"
+
+        if st.session_state.page == "Donation":
+            # Full-page donation flow: hide the sidebar entirely
+            st.markdown(
+                """<style>[data-testid="stSidebar"] {display: none;}</style>""",
+                unsafe_allow_html=True
+            )
+        else:
+            current = st.session_state.page if st.session_state.page in donor_pages else "Dashboard"
+            choice = st.sidebar.radio("Go to", donor_pages, index=donor_pages.index(current))
+            if choice != st.session_state.page:
+                st.session_state.page = choice
+                st.rerun()
+
+        if st.session_state.page == "Dashboard":
+            donor_home()
+        elif st.session_state.page == "Marketplace":
             market()
-        elif nav == "Search NGOs":
-            donor_dashboard()   # NGO search + transparency scores
-        elif nav == "Reports":
+        elif st.session_state.page == "Search NGOs":
+            donor_dashboard()
+        elif st.session_state.page == "Reports":
             donor_reports()
+        elif st.session_state.page == "Donation":
+            donation()

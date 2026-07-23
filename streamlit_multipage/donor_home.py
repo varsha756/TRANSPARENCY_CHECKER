@@ -261,7 +261,6 @@ def donor_home():
     <div class="header-actions">
       <input class="search-box" id="searchBox" placeholder="Search recent donations by NGO..." />
       <button class="btn ghost" id="exportBtn">⬇ Export CSV</button>
-      <button class="btn" id="donateBtn">+ New Donation</button>
     </div>
   </div>
 
@@ -496,11 +495,6 @@ document.getElementById("exportBtn").addEventListener("click", () => {{
   a.href = url; a.download = "donations_export.csv"; a.click();
   URL.revokeObjectURL(url);
 }});
-
-// ---- Quick "New Donation" CTA -> tell the Streamlit parent to navigate ----
-document.getElementById("donateBtn").addEventListener("click", () => {{
-  window.parent.postMessage({{ type: "streamlit:goto", page: "Marketplace" }}, "*");
-}});
 </script>
 </body>
 </html>
@@ -508,12 +502,12 @@ document.getElementById("donateBtn").addEventListener("click", () => {{
 
     components.html(dashboard_html, height=1030, scrolling=False)
 
-    # Fallback / accessible navigation trigger for the "+ New Donation" CTA,
-    # since components.html can't directly change st.session_state.
-    st.markdown(
-        "<div style='text-align:right;margin-top:-6px;'>"
-        "<span style='color:#5c6580;font-size:11.5px;'>"
-        "Tip: use the sidebar to go to <b>Marketplace</b> to make a new donation."
-        "</span></div>",
-        unsafe_allow_html=True,
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("➕ New Donation", use_container_width=True):
+            st.session_state["page"] = "Marketplace"
+            st.rerun()
+    with col2:
+        if st.button("🔍 Search NGOs", use_container_width=True):
+            st.session_state["page"] = "Search NGOs"
+            st.rerun()
