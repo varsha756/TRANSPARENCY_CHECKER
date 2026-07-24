@@ -85,6 +85,23 @@ def init_db():
             FOREIGN KEY (org_id) REFERENCES organizations(id)
         )
     """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS money_usage_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            donor_id INTEGER,
+            org_id INTEGER,
+            report_id INTEGER,
+            donation_total REAL,
+            donation_count INTEGER,
+            usage_summary TEXT,
+            generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (donor_id) REFERENCES users(id),
+            FOREIGN KEY (org_id) REFERENCES organizations(id),
+            FOREIGN KEY (report_id) REFERENCES reports(id)
+        )
+    """)
+
     conn.commit()
     conn.close()
     print(f"[DB INIT] all tables ensured at: {DB_PATH}")

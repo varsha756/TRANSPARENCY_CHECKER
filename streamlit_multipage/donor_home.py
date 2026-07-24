@@ -13,7 +13,7 @@ from services.report_service import get_all_org_scores
 # ---------------------------------------------------------------------------
 PAGE_CSS = """
 <style>
-.block-container { padding-top: 1.2rem; padding-bottom: 0.5rem; max-width: 100% !important; }
+.block-container { padding-top: 0.6rem; padding-bottom: 0.3rem; max-width: 100% !important; }
 header[data-testid="stHeader"] { background: transparent; }
 #MainMenu, footer { visibility: hidden; }
 </style>
@@ -127,14 +127,11 @@ def donor_home():
     overflow: hidden;
   }}
 
-  /* FIX: header row is now flexible (minmax) instead of a hard 56px,
-     so if the header wraps to two lines it grows instead of overflowing
-     into the KPI row below it. */
   .wrap {{
     display: grid;
-    grid-template-rows: minmax(56px, auto) 118px 260px 190px 200px;
-    gap: 14px;
-    height: 1010px;
+    grid-template-rows: minmax(40px, auto) 100px 240px 170px 180px;
+    gap: 10px;
+    height: 780px;
     padding: 4px 4px 0 4px;
   }}
   .card {{
@@ -142,41 +139,41 @@ def donor_home():
     background-color: #131a2b;
     border: 1px solid #232b40;
     border-radius: 14px;
-    padding: 14px 18px;
+    padding: 12px 16px;
     min-height: 0;
-    overflow: hidden; /* FIX: safety net so no child ever visually bleeds into the next grid row */
+    overflow: hidden;
     display: flex;
     flex-direction: column;
   }}
   .card h4 {{
-    margin: 0 0 8px 0; font-size: 13.5px; font-weight: 600;
+    margin: 0 0 8px 0; font-size: 13px; font-weight: 600;
     color: #aab2c5; text-transform: uppercase; letter-spacing: .04em;
     display: flex; align-items: center; gap: 6px; justify-content: space-between;
   }}
   /* Header */
   .header-row {{
     display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap;   /* FIX: allow actions to drop to a new line instead of overflowing */
-    row-gap: 8px;
+    flex-wrap: wrap;
+    row-gap: 6px;
   }}
-  .title-block h1 {{ margin: 0; font-size: 22px; font-weight: 700; color: #fff; }}
-  .title-block .sub {{ color: #8b93a7; font-size: 12.5px; margin-top: 2px; }}
+  .title-block h1 {{ margin: 0; font-size: 18px; font-weight: 700; color: #fff; }}
+  .title-block .sub {{ color: #8b93a7; font-size: 11.5px; margin-top: 1px; }}
   .header-actions {{
     display: flex; gap: 10px; align-items: center;
-    flex-wrap: wrap;    /* FIX: buttons/search wrap together, no clipping */
+    flex-wrap: wrap;
   }}
   .search-box {{
     background: #10162a; border: 1px solid #262f47; border-radius: 8px;
-    padding: 7px 12px; color: #e8eaf2; font-size: 13px;
-    width: 220px;
-    min-width: 140px;   /* FIX: shrink before wrapping, so it fits more often */
+    padding: 6px 12px; color: #e8eaf2; font-size: 12.5px;
+    width: 200px;
+    min-width: 140px;
     flex-shrink: 1;
     outline: none;
   }}
   .search-box::placeholder {{ color: #5c6580; }}
   .btn {{
     background: #4f8cff; color: #fff; border: none; border-radius: 8px;
-    padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+    padding: 7px 13px; font-size: 12.5px; font-weight: 600; cursor: pointer;
     white-space: nowrap;
   }}
   .btn:hover {{ background: #3b76e6; }}
@@ -186,64 +183,64 @@ def donor_home():
   .btn.ghost:hover {{ border-color: #4f8cff; color: #fff; }}
 
   /* KPI row */
-  .kpi-row {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }}
+  .kpi-row {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }}
   .kpi {{
     background: #131a2b; border: 1px solid #232b40; border-radius: 14px;
-    padding: 14px 16px; display: flex; flex-direction: column; justify-content: center;
+    padding: 10px 14px; display: flex; flex-direction: column; justify-content: center;
   }}
-  .kpi .label {{ color: #8b93a7; font-size: 12px; margin-bottom: 6px; }}
-  .kpi .value {{ font-size: 24px; font-weight: 700; color: #fff; }}
+  .kpi .label {{ color: #8b93a7; font-size: 11px; margin-bottom: 4px; }}
+  .kpi .value {{ font-size: 20px; font-weight: 700; color: #fff; }}
   .kpi .value.accent {{ color: #6fe2a0; }}
 
   /* Row 3: charts + leaderboard */
-  .row3 {{ display: grid; grid-template-columns: 1.1fr 1.3fr 1fr; gap: 14px; min-height: 0; }}
+  .row3 {{ display: grid; grid-template-columns: 1.1fr 1.3fr 1fr; gap: 10px; min-height: 0; }}
   .chart-holder {{ position: relative; flex: 1; min-height: 0; }}
 
   .ngo-item {{
     display: flex; align-items: center; justify-content: space-between;
-    padding: 7px 0; border-bottom: 1px solid #1c2338;
+    padding: 6px 0; border-bottom: 1px solid #1c2338;
   }}
   .ngo-item:last-child {{ border-bottom: none; }}
   .ngo-rank {{
     display: inline-flex; align-items: center; justify-content: center;
-    width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700;
+    width: 18px; height: 18px; border-radius: 50%; font-size: 10.5px; font-weight: 700;
     color: #fff; margin-right: 8px;
   }}
-  .ngo-name {{ font-size: 13.5px; color: #dfe3ee; display: flex; align-items: center; }}
+  .ngo-name {{ font-size: 13px; color: #dfe3ee; display: flex; align-items: center; }}
   .score-pill {{
-    color: #fff; padding: 2px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;
+    color: #fff; padding: 2px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 700;
   }}
   .ngo-list {{ overflow-y: auto; flex: 1; }}
 
   /* Row 4: recent donations + goal */
-  .row4 {{ display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; min-height: 0; }}
+  .row4 {{ display: grid; grid-template-columns: 1.6fr 1fr; gap: 10px; min-height: 0; }}
   .recent-list {{ overflow-y: auto; flex: 1; padding-right: 4px; }}
   .recent-item {{
     display: flex; justify-content: space-between; align-items: baseline;
-    padding: 8px 0; border-bottom: 1px solid #1c2338; font-size: 13px;
+    padding: 6px 0; border-bottom: 1px solid #1c2338; font-size: 12.5px;
   }}
   .recent-item .org {{ font-weight: 600; color: #fff; }}
-  .recent-item .date {{ color: #6d7690; font-size: 11px; }}
+  .recent-item .date {{ color: #6d7690; font-size: 10.5px; }}
   .recent-item .amt {{ color: #6fe2a0; font-weight: 700; }}
   .hidden {{ display: none !important; }}
 
-  .goal-box {{ display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 6px; }}
-  .goal-sub {{ color: #6d7690; font-size: 11px; text-align: center; }}
+  .goal-box {{ display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 4px; }}
+  .goal-sub {{ color: #6d7690; font-size: 10.5px; text-align: center; }}
 
   /* Row 5: highest donations table */
   .table-wrap {{ overflow-y: auto; flex: 1; }}
-  table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
+  table {{ width: 100%; border-collapse: collapse; font-size: 12.5px; }}
   th {{
-    text-align: left; color: #8b93a7; font-weight: 600; font-size: 11.5px;
-    text-transform: uppercase; letter-spacing: .03em; padding: 6px 10px;
+    text-align: left; color: #8b93a7; font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .03em; padding: 5px 10px;
     border-bottom: 1px solid #232b40; cursor: pointer; user-select: none;
     position: sticky; top: 0; background: #131a2b;
   }}
   th:hover {{ color: #4f8cff; }}
-  td {{ padding: 7px 10px; border-bottom: 1px solid #1a2136; color: #dfe3ee; }}
+  td {{ padding: 6px 10px; border-bottom: 1px solid #1a2136; color: #dfe3ee; }}
   tr:hover td {{ background: #171f34; }}
   .amount-cell {{ color: #6fe2a0; font-weight: 700; }}
-  .empty-note {{ color: #6d7690; font-size: 13px; margin: auto; }}
+  .empty-note {{ color: #6d7690; font-size: 12.5px; margin: auto; }}
 
   ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
   ::-webkit-scrollbar-thumb {{ background: #2a3350; border-radius: 4px; }}
@@ -253,7 +250,7 @@ def donor_home():
 <div class="wrap">
 
   <!-- Header -->
-  <div class="card header-row" style="padding: 10px 18px;">
+  <div class="card header-row" style="padding: 6px 16px;">
     <div class="title-block">
       <h1>Donor Dashboard</h1>
       <div class="sub" id="welcomeMsg"></div>
@@ -298,10 +295,10 @@ def donor_home():
     <div class="card">
       <h4>🎯 Giving Goal <span style="font-weight:400; text-transform:none; color:#5c6580;">(suggested)</span></h4>
       <div class="goal-box">
-        <div class="chart-holder" style="width:120px;height:120px;flex:none;">
+        <div class="chart-holder" style="width:100px;height:100px;flex:none;">
           <canvas id="goalRing"></canvas>
         </div>
-        <div id="goalLabel" style="font-size:20px;font-weight:700;color:#fff;"></div>
+        <div id="goalLabel" style="font-size:18px;font-weight:700;color:#fff;"></div>
         <div class="goal-sub" id="goalSub"></div>
       </div>
     </div>
@@ -500,7 +497,7 @@ document.getElementById("exportBtn").addEventListener("click", () => {{
 </html>
 """
 
-    components.html(dashboard_html, height=1030, scrolling=False)
+    components.html(dashboard_html, height=790, scrolling=False)
 
     col1, col2 = st.columns(2)
     with col1:

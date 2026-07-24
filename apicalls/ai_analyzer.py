@@ -1,5 +1,3 @@
-
-
 import os
 import json
 import requests
@@ -61,7 +59,7 @@ def _extract_json(raw_text: str) -> dict:
 
 
 def analyze_report_with_ai(extracted_text: str) -> dict:
-    
+
     if not ANTHROPIC_API_KEY:
         return {
             "transparency_score": 0,
@@ -141,3 +139,74 @@ def analyze_report_with_ai(extracted_text: str) -> dict:
             "red_flags": f"Could not parse AI response: {e}",
             "summary": "The AI analysis service returned an unexpected response.",
         }
+
+
+MONEY_USAGE_SYSTEM_PROMPT = """You are a donor-transparency assistant. You will be given:
+1. The financial/annual report text an NGO submitted.
+2. The total amount a specific donor has given to this NGO.
+
+Write a short, plain-language explanation (3-5 sentences) of how a donor's
+contribution likely supported the NGO's work, based ONLY on what the report
+text actually says (program areas, spending categories, overhead ratio, etc).
+
+Rules:
+- Do not invent figures that aren't in the report.
+- If the report doesn't break down spending clearly, say so honestly and
+  give a general sense of the NGO's stated mission/activities instead.
+- Do not claim a precise rupee-for-rupee allocation (e.g. don't say
+  "your ₹500 bought X notebooks") unless the report itself gives that kind
+  of per-unit costing.
+- Keep the tone factual and reassuring but not exaggerated.
+- Respond with ONLY a JSON object, no markdown, no code fences, in this shape:
+
+{
+  "usage_summary": "<3-5 sentence explanation>"
+}
+"""
+
+
+def analyze_money_usage(org_name: str, extracted_text: str, donation_amount: float, donation_count: int) -> dict:
+    if not ANTHROPIC_API_KEY:
+        return {"usage_summary": "AI analysis unavailable: missing ANTHROPIC_API_KEY."}
+
+    if not extracted_text or not extracted_text.strip():
+        return {
+            "usage_summary": f"{org_name} hasn't uploaded a financial report yet, "
+                              f"so we can't generate a usage summary for your donation."
+        }
+
+    trimmed_text = extracted_text[:15000]
+
+    user_content = (
+        f"NGO name: {org_name}\n"
+        f"Donor's total contribution to this NGO: ₹{donation_amount:.2f} across {donation_count} donation(s)\n\n"
+        f"Report text:\n\n{trimmed_text}"
+    )
+
+    try:
+        response = requests.post(
+            ANTHROPIC_API_URL,
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": MODEL,
+                "max_tokens": 512,
+                "system": MONEY_USAGE_SYSTEM_PROMPT,
+                "messages": [{"role": "user", "content": user_content}],
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
+        text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
+        raw_reply = "\n".join(text_blocks)
+        parsed = _extract_json(raw_reply)
+        summary = str(parsed.get("usage_summary", "")).strip()
+        return {"usage_summary": summary or "AI could not generate a usage summary from this report."}
+    except requests.exceptions.RequestException as e:
+        return {"usage_summary": f"Could not reach AI service: {e}"}
+    except (ValueError, KeyError, json.JSONDecodeError) as e:
+        return {"usage_summary": f"Could not parse AI response: {e}"}

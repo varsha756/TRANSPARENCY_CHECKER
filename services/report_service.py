@@ -64,3 +64,32 @@ def get_latest_score_for_org(org_id):
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
+def get_all_org_scores():
+    """
+    Fetches every organization along with its most recent transparency score,
+    ordered from highest to lowest score. Used for donor-facing leaderboards
+    (e.g. "Top NGOs by Transparency").
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT o.id AS org_id, o.name AS name, s.transparency_score,
+               s.admin_cost_percentage, s.red_flags, s.ai_summary
+        FROM organizations o
+        LEFT JOIN reports r ON r.org_id = o.id
+        LEFT JOIN scores s ON s.report_id = r.id
+        WHERE r.id IS NULL OR r.id = (
+            SELECT r2.id
+            FROM reports r2
+            JOIN scores s2 ON s2.report_id = r2.id
+            WHERE r2.org_id = o.id
+            ORDER BY s2.id DESC
+            LIMIT 1
+        )
+        ORDER BY s.transparency_score DESC
+        """
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]

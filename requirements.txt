@@ -1,6 +1,7 @@
-streamlit
+streamlit>=1.30
 streamlit-lottie
 requests
 bcrypt
 pdfplumber
 reportlab
+python-dotenv

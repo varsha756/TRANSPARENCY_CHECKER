@@ -87,29 +87,29 @@ else:
     st.sidebar.write(f"Logged in as: **{user['username']}** ({role})")
 
     if role == "ngo":
-        nav = st.sidebar.radio("Go to", ["Dashboard", "Upload Report"])
-    else:
-        nav = st.sidebar.radio("Go to", ["Dashboard", "Marketplace", "Search NGOs", "Reports"])
+        ngo_pages = ["Dashboard", "Upload Report"]
 
-    if st.sidebar.button("Logout"):
-        st.session_state.clear()
-        st.rerun()
+        if "page" not in st.session_state or st.session_state.page not in ngo_pages:
+            st.session_state.page = "Dashboard"
 
-    st.divider()
+        choice = st.sidebar.radio("Go to", ngo_pages, index=ngo_pages.index(st.session_state.page))
+        if choice != st.session_state.page:
+            st.session_state.page = choice
+            st.rerun()
 
-    # --- NGO Pages ---
-    if role == "ngo":
-        nav = st.sidebar.radio("Go to", ["Dashboard", "Upload Report"])
-        if nav == "Dashboard":
+        if st.sidebar.button("Logout"):
+            st.session_state.clear()
+            st.rerun()
+
+        if st.session_state.page == "Dashboard":
             ngo_dashboard()
-        elif nav == "Upload Report":
+        elif st.session_state.page == "Upload Report":
             st.write("📄 Upload report page coming soon...")
 
     else:
-        donor_pages = ["Dashboard", "Marketplace", "Reports"]
-        all_pages = donor_pages + ["Search NGOs", "Donation"]
+        donor_pages = ["Dashboard", "Marketplace", "Search NGOs", "Reports"]
 
-        if "page" not in st.session_state or st.session_state.page not in all_pages:
+        if "page" not in st.session_state or st.session_state.page not in donor_pages + ["Donation"]:
             st.session_state.page = "Dashboard"
 
         if st.session_state.page == "Donation":
@@ -119,10 +119,13 @@ else:
                 unsafe_allow_html=True
             )
         else:
-            current = st.session_state.page if st.session_state.page in donor_pages else "Dashboard"
-            choice = st.sidebar.radio("Go to", donor_pages, index=donor_pages.index(current))
+            choice = st.sidebar.radio("Go to", donor_pages, index=donor_pages.index(st.session_state.page))
             if choice != st.session_state.page:
                 st.session_state.page = choice
+                st.rerun()
+
+            if st.sidebar.button("Logout"):
+                st.session_state.clear()
                 st.rerun()
 
         if st.session_state.page == "Dashboard":
