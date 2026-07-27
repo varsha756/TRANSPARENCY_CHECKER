@@ -13,7 +13,8 @@ from streamlit_multipage.donor_report import donor_reports
 from streamlit_multipage.market import market
 from services.report_service import get_all_org_scores
 from streamlit_multipage.donation import donation
-
+from config.database import init_db
+from config.ngo_database import init_ngo_db
 
 # --- Page config ---
 st.set_page_config(page_title="Donation Transparency Checker", page_icon="🌍", layout="wide")
@@ -21,6 +22,7 @@ st.set_page_config(page_title="Donation Transparency Checker", page_icon="🌍",
 # --- Initialize DB once ---
 if "db_initialized" not in st.session_state:
     init_db()
+    init_ngo_db()
     st.session_state["db_initialized"] = True
 
 # --- Session defaults ---
