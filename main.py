@@ -15,6 +15,7 @@ from services.report_service import get_all_org_scores
 from streamlit_multipage.donation import donation
 from config.database import init_db
 from config.ngo_database import init_ngo_db
+from streamlit_multipage.donor_chatbot import donor_chatbot
 
 # --- Page config ---
 st.set_page_config(page_title="Donation Transparency Checker", page_icon="🌍", layout="wide")

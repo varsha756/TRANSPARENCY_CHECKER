@@ -1,7 +1,7 @@
 import streamlit as st
 from config.database import get_connection
 from apicalls.ai_analyzer import analyze_money_usage
-
+from components.chat_widget import render_chat_bubble
 
 def donor_reports():
     if not st.session_state.get("logged_in") or st.session_state.get("role") != "donor":
@@ -158,3 +158,4 @@ def donor_reports():
             st.download_button("Download Certificate", "certificate.pdf", key=f"cert_{org_id}")
 
     conn.close()
+    render_chat_bubble()

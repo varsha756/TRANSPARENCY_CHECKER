@@ -1,4 +1,5 @@
 import streamlit as st
+from components.chat_widget import render_chat_bubble
 
 NGO_DATA = [
     {"name": "Youth Sanstha", "tagline": "Skilling India's next workforce", "category": "Youth Empowerment",
@@ -49,3 +50,5 @@ def market():
                     # and force a rerun, exactly like the sidebar navigation does.
                     st.session_state["page"] = "Donation"
                     st.rerun()
+                    
+                    render_chat_bubble()

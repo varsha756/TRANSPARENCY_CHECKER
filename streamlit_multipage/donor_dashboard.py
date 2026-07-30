@@ -4,6 +4,40 @@ from services.report_service import get_latest_score_for_org
 
 from services.donation_service import record_donation
 
+import streamlit as st
+from services.chat_service import get_chatbot_response
+
+def donor_dashboard():
+    if not st.session_state.get("logged_in") or st.session_state.get("role") != "donor":
+        st.error("Access restricted to Donor accounts.")
+        st.stop()
+
+    st.title("Donor Dashboard")
+
+    # --- Main donor dashboard content ---
+    st.write("Welcome to the donation transparency platform.")
+
+    # --- Fixed Chatbox in Sidebar (always visible) ---
+    st.sidebar.title("💬 TransparencyBot")
+    st.sidebar.write("Ask me anything about this website.")
+
+    if "chat_history" not in st.session_state:
+        st.session_state["chat_history"] = []
+
+    user_input = st.sidebar.text_input("Your question:", key="chat_input")
+    if st.sidebar.button("Send"):
+        if user_input.strip():
+            response = get_chatbot_response(user_input)
+            st.session_state["chat_history"].append(("You", user_input))
+            st.session_state["chat_history"].append(("Bot", response))
+
+    # Display chat history
+    for sender, msg in st.session_state["chat_history"]:
+        if sender == "You":
+            st.sidebar.markdown(f"**You:** {msg}")
+        else:
+            st.sidebar.markdown(f"**Bot:** {msg}")
+
 def record_donation_form():
     st.subheader("Record a Donation")
     conn = get_connection()
@@ -122,3 +156,4 @@ def donor_dashboard():
 
     record_donation_form()
     st.divider()
+    

@@ -6,6 +6,7 @@ from services.donation_service import (
     get_donation_trend, get_highest_donations
 )
 from services.report_service import get_all_org_scores
+from components.chat_widget import render_chat_bubble
 
 # ---------------------------------------------------------------------------
 # Page-level CSS: strip Streamlit's default padding so our fixed-height
@@ -508,3 +509,5 @@ document.getElementById("exportBtn").addEventListener("click", () => {{
         if st.button("🔍 Search NGOs", use_container_width=True):
             st.session_state["page"] = "Search NGOs"
             st.rerun()
+
+    render_chat_bubble()
