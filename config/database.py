@@ -101,7 +101,26 @@ def init_db():
             FOREIGN KEY (report_id) REFERENCES reports(id)
         )
     """)
-
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS volunteers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        campaign_id INTEGER NOT NULL,
+        donor_id INTEGER,
+        name TEXT NOT NULL,
+        contact TEXT NOT NULL,
+        contribution TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id)
+    )
+""")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS search_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        search_term TEXT NOT NULL,
+        searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+""")
     conn.commit()
     conn.close()
     print(f"[DB INIT] all tables ensured at: {DB_PATH}")

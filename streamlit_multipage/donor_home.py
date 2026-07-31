@@ -1,6 +1,7 @@
 import json
 import streamlit as st
 import streamlit.components.v1 as components
+from components.news_widget import render_news_sidebar
 from services.donation_service import (
     get_donor_summary, get_recent_donations, get_impact_breakdown,
     get_donation_trend, get_highest_donations
@@ -33,7 +34,7 @@ def donor_home():
 
     donor_id = st.session_state["user_id"]
     user = st.session_state["user"]
-
+    render_news_sidebar()
     # ---- Pull data from services (unchanged calls / shapes) --------------
     summary = get_donor_summary(donor_id) or {}
     recent = get_recent_donations(donor_id) or []

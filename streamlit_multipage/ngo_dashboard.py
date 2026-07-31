@@ -9,6 +9,7 @@ from apicalls.ai_analyzer import analyze_report_with_ai
 from services.campaign_service import get_campaigns_for_org, create_campaign, get_campaign_totals_for_org
 
 
+
 # ---------------------------------------------------------------------------
 # Design tokens
 # ---------------------------------------------------------------------------
@@ -432,8 +433,7 @@ def ngo_dashboard():
     # ---------------- Campaigns section (real container) ----------------
     with st.container(key="campaigns_card"):
         st.markdown('<div class="nd-section-title">Campaigns</div>', unsafe_allow_html=True)
-        st.markdown('<div class="nd-section-desc">Create a fundraising campaign. New campaigns need admin approval before donors can see them.</div>', unsafe_allow_html=True)
-
+        st.markdown('<div class="nd-section-desc">Create a fundraising campaign. It goes live for donors immediately.</div>', unsafe_allow_html=True)
         with st.form("new_campaign_form", clear_on_submit=True):
             title = st.text_input("Campaign title", placeholder="School kits drive")
             description = st.text_area("Description", placeholder="What will this campaign fund?")
@@ -445,7 +445,7 @@ def ngo_dashboard():
                     st.error("Give the campaign a title first.")
                 else:
                     create_campaign(org_id, title.strip(), description.strip(), goal_amount)
-                    st.success("Campaign created — waiting on admin approval.")
+                    st.success("Campaign created and is now live for donors!")
                     st.rerun()
 
         st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)

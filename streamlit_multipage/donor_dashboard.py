@@ -3,7 +3,7 @@ from config.database import get_connection
 from services.report_service import get_latest_score_for_org
 
 from services.donation_service import record_donation
-
+from streamlit_multipage.campaigns import campaigns_page
 import streamlit as st
 from services.chat_service import get_chatbot_response
 

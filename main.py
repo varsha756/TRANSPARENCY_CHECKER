@@ -16,6 +16,7 @@ from streamlit_multipage.donation import donation
 from config.database import init_db
 from config.ngo_database import init_ngo_db
 from streamlit_multipage.donor_chatbot import donor_chatbot
+from streamlit_multipage.campaigns import campaigns_page
 
 # --- Page config ---
 st.set_page_config(page_title="Donation Transparency Checker", page_icon="🌍", layout="wide")
@@ -110,8 +111,7 @@ else:
             st.write("📄 Upload report page coming soon...")
 
     else:
-        donor_pages = ["Dashboard", "Marketplace", "Search NGOs", "Reports"]
-
+        donor_pages = ["Dashboard", "Marketplace", "Search NGOs", "Reports", "Campaigns"]
         if "page" not in st.session_state or st.session_state.page not in donor_pages + ["Donation"]:
             st.session_state.page = "Dashboard"
 
@@ -139,5 +139,9 @@ else:
             donor_dashboard()
         elif st.session_state.page == "Reports":
             donor_reports()
+        elif st.session_state.page == "Campaigns":
+            campaigns_page()
         elif st.session_state.page == "Donation":
             donation()
+        elif st.session_state.page == "Chatbot":
+            donor_chatbot()

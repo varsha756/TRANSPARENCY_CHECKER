@@ -32,12 +32,12 @@ def get_campaigns_for_org(org_id):
 
 
 def create_campaign(org_id, title, description, goal_amount):
-    """New campaigns always start as 'pending' until an admin approves them."""
+    """New campaigns are auto-approved and immediately visible to donors."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO campaigns (org_id, title, description, goal_amount, status)
-        VALUES (?, ?, ?, ?, 'pending')
+        VALUES (?, ?, ?, ?, 'approved')
     """, (org_id, title, description, goal_amount))
     conn.commit()
     new_id = cursor.lastrowid
@@ -59,3 +59,57 @@ def get_campaign_totals_for_org(org_id):
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else {"campaign_count": 0, "active_count": 0}
+
+def get_approved_campaigns():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT
+            c.id, c.org_id, c.title, c.description, c.goal_amount, c.created_at,
+            COALESCE(SUM(d.amount), 0) AS raised,
+            COUNT(d.id) AS donor_count
+        FROM campaigns c
+        LEFT JOIN campaign_donations cd ON cd.campaign_id = c.id
+        LEFT JOIN donations d ON d.id = cd.donation_id
+        WHERE c.status = 'approved'
+        GROUP BY c.id
+        ORDER BY c.created_at DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def register_volunteer(campaign_id, donor_id, name, contact, contribution):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO volunteers (campaign_id, donor_id, name, contact, contribution)
+        VALUES (?, ?, ?, ?, ?)
+    """, (campaign_id, donor_id, name, contact, contribution))
+    conn.commit()
+    conn.close()
+
+def link_donation_to_campaign(campaign_id, donation_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO campaign_donations (campaign_id, donation_id)
+        VALUES (?, ?)
+    """, (campaign_id, donation_id))
+    conn.commit()
+    conn.close()
+
+def get_volunteers_for_campaign(campaign_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM volunteers WHERE campaign_id = ? ORDER BY created_at DESC",
+        (campaign_id,)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]      
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
