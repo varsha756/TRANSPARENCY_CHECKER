@@ -4,6 +4,8 @@ from services.donation_service import record_donation
 from components.chat_widget import render_chat_bubble
 import textwrap
 from components.news_widget import render_news_sidebar
+from google import genai
+
 
 # ---------------------------------------------------------------------------
 # Design tokens (same palette as the NGO dashboard, for a consistent app feel)
@@ -159,7 +161,8 @@ def campaigns_page():
                 """,
                 unsafe_allow_html=True,
             )
-            render_news_sidebar()
+            render_news_sidebar()pip install google-generativeai
+
 
             tab_donate, tab_volunteer = st.tabs(["💰  Donate Money", "🙋  Volunteer"])
 

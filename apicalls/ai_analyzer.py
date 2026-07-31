@@ -1,8 +1,11 @@
 import os
 import json
 from dotenv import load_dotenv
-from google import genai
+
 from google.genai import types
+import google.generativeai as genai
+
+
 
 load_dotenv()
 
