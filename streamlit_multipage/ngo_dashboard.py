@@ -7,7 +7,8 @@ from services.report_service import save_report_and_score, get_latest_score_for_
 from services.news_service import get_ngo_news
 from apicalls.ai_analyzer import analyze_report_with_ai
 from services.campaign_service import get_campaigns_for_org, create_campaign, get_campaign_totals_for_org
-from google import genai
+import google.generativeai as genai
+
 
 
 
