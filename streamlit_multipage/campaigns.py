@@ -162,7 +162,7 @@ def campaigns_page():
                 """,
                 unsafe_allow_html=True,
             )
-            render_news_sidebar()pip install google-generativeai
+            render_news_sidebar()
 
 
             tab_donate, tab_volunteer = st.tabs(["💰  Donate Money", "🙋  Volunteer"])
