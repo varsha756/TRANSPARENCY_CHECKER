@@ -1,8 +1,9 @@
 import os
 import random
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from google.generativeai import genai
+from google.generativeai import types
+
 
 load_dotenv()
 
