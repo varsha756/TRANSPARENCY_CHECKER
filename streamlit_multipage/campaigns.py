@@ -4,7 +4,8 @@ from services.donation_service import record_donation
 from components.chat_widget import render_chat_bubble
 import textwrap
 from components.news_widget import render_news_sidebar
-from google import genai
+import google.generativeai as genai
+
 
 
 # ---------------------------------------------------------------------------
