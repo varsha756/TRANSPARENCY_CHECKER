@@ -1,19 +1,22 @@
 import os
+import streamlit as st
 import json
 from dotenv import load_dotenv
-
-from google.generativeai import types
 
 import google.generativeai as genai
 
 
-
 load_dotenv()
-
+st.write("DEBUG os.getenv:", repr(os.getenv("GOOGLE_API_KEY")))
+st.write("DEBUG st.secrets:", dict(st.secrets) if hasattr(st, "secrets") else "no secrets")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_MODEL = "gemini-1.5-flash"
 
-_client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
+else:
+    pass  # per-call model objects below are guarded by GOOGLE_API_KEY checks
+
 
 SYSTEM_PROMPT = """You are a financial transparency auditor for non-profit / NGO
 annual and financial reports. You will be given raw text extracted from a PDF.
@@ -88,15 +91,16 @@ def _extract_json(raw_text: str) -> dict:
 
 
 def _call_gemini(system_prompt: str, user_content: str, max_tokens: int = 2048) -> str:
-    """Calls Gemini via the google-genai SDK and returns the raw text reply."""
-    response = _client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=user_content,
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
+    """Calls Gemini via the google-generativeai SDK and returns the raw text reply."""
+    model = genai.GenerativeModel(
+        model_name=GEMINI_MODEL,
+        system_instruction=system_prompt,
+    )
+    response = model.generate_content(
+        user_content,
+        generation_config=genai.types.GenerationConfig(
             max_output_tokens=max_tokens,
             temperature=0.2,
-            thinking_config=types.ThinkingConfig(thinking_level="minimal"),
         ),
     )
     if not response.text:

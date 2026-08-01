@@ -11,7 +11,13 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GEMINI_MODEL = "gemini-3.6-flash"
 
-_client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
+import google.generativeai as genai
+
+_client = None
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
+    _client = genai.GenerativeModel("gemini-1.5-flash")  # or gemini-1.5-pro
+
 
 # Basic project info points
 PROJECT_INFO = [

@@ -1,9 +1,10 @@
 [server]
 fileWatcherType = "none"
+
 [theme]
-base="dark"
-primaryColor="#22c55e"
-backgroundColor="#0e1117"
-secondaryBackgroundColor="#1a1d24"
-textColor="#fafafa"
-font="sans serif"
+base = "dark"
+primaryColor = "#22c55e"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#1a1d24"
+textColor = "#fafafa"
+font = "sans serif"

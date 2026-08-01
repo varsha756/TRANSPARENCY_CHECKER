@@ -6,3 +6,4 @@ pdfplumber
 reportlab
 python-dotenv
 google-generativeai
+google-genai
