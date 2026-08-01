@@ -3,20 +3,15 @@ import random
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-from google.generativeai import types
-
 
 load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GEMINI_MODEL = "gemini-3.6-flash"
 
-import google.generativeai as genai
-
 _client = None
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
-    _client = genai.GenerativeModel("gemini-1.5-flash")  # or gemini-1.5-pro
 
 
 # Basic project info points
@@ -58,6 +53,14 @@ a few short bullet points at most, since this runs inside a small chat widget.
 If you don't know something specific about this platform's exact behavior, say
 so honestly rather than guessing.
 """
+
+# Build the model with the system prompt attached (system_instruction is
+# supported directly on GenerativeModel in the google-generativeai SDK).
+if GOOGLE_API_KEY:
+    _client = genai.GenerativeModel(
+        model_name=GEMINI_MODEL,
+        system_instruction=SYSTEM_PROMPT,
+    )
 
 
 def _is_greeting(text: str) -> bool:
@@ -108,22 +111,18 @@ def get_chatbot_response(query: str, history: list | None = None) -> str:
         return _rule_based_response(query)
 
     try:
+        # Old-SDK multi-turn format: list of {"role": ..., "parts": [text]} dicts
         contents = []
         for turn in (history or []):
             role = "user" if turn.get("role") == "user" else "model"
-            contents.append(
-                types.Content(role=role, parts=[types.Part(text=turn.get("text", ""))])
-            )
-        contents.append(types.Content(role="user", parts=[types.Part(text=query)]))
+            contents.append({"role": role, "parts": [turn.get("text", "")]})
+        contents.append({"role": "user", "parts": [query]})
 
-        response = _client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
+        response = _client.generate_content(
+            contents,
+            generation_config=genai.types.GenerationConfig(
                 max_output_tokens=300,
                 temperature=0.4,
-                thinking_config=types.ThinkingConfig(thinking_level="minimal"),
             ),
         )
         if response.text and response.text.strip():
