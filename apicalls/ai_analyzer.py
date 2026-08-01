@@ -7,8 +7,6 @@ import google.generativeai as genai
 
 
 load_dotenv()
-st.write("DEBUG os.getenv:", repr(os.getenv("GOOGLE_API_KEY")))
-st.write("DEBUG st.secrets:", dict(st.secrets) if hasattr(st, "secrets") else "no secrets")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GEMINI_MODEL = "gemini-1.5-flash"
 
