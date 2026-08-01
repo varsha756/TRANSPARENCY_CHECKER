@@ -2,10 +2,7 @@ import streamlit as st
 from services.campaign_service import get_approved_campaigns, register_volunteer, link_donation_to_campaign
 from services.donation_service import record_donation
 from components.chat_widget import render_chat_bubble
-import textwrap
 from components.news_widget import render_news_sidebar
-import google.generativeai as genai
-
 
 
 # ---------------------------------------------------------------------------
@@ -54,8 +51,7 @@ def _inject_theme():
             }}
             .cp-hero-sub {{ font-size: 14px; color: #C9DED3; position: relative; }}
 
-            div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > div[class*="st-key-campaign_card_"]),
-[class*="st-key-campaign_card_"] {{
+            [class*="st-key-campaign_card_"] {{
                 background: {PAPER}; border-radius: 20px; padding: 24px 28px;
                 box-shadow: 0 2px 10px rgba(20, 51, 43, 0.06);
                 border: 1px solid rgba(255,255,255,0.05); margin-bottom: 22px;
@@ -111,15 +107,20 @@ def campaigns_page():
         st.error("Access restricted to Donor accounts.")
         st.stop()
 
-    def _inject_theme():
-        st.markdown(
-        textwrap.dedent(f"""
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        ...
-        </style>
-        """),
+    _inject_theme()
+
+    st.markdown(
+        f"""
+        <div class="cp-hero">
+            <div class="cp-hero-eyebrow">Campaigns</div>
+            <div class="cp-hero-title">Support an Active Campaign</div>
+            <div class="cp-hero-sub">Every contribution — money or time — moves these goals forward.</div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
+
+    render_news_sidebar()
 
     campaigns = get_approved_campaigns()
     if not campaigns:
@@ -162,8 +163,6 @@ def campaigns_page():
                 """,
                 unsafe_allow_html=True,
             )
-            render_news_sidebar()
-
 
             tab_donate, tab_volunteer = st.tabs(["💰  Donate Money", "🙋  Volunteer"])
 

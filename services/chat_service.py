@@ -51,8 +51,11 @@ Platform features you can explain:
   campaign, and receive a transaction ID.
 - The platform shows an NGO news sidebar for NGO users.
 
-Tone: friendly, concise, plain language. Keep replies SHORT — 1-3 sentences or
-a few short bullet points at most, since this runs inside a small chat widget.
+Tone: friendly, concise, plain language. Keep replies SHORT — 1-3 sentences
+MAXIMUM, or at most 3 short bullet points. Never write numbered step-by-step
+guides or long multi-part lists, since this runs inside a narrow 300px-wide
+chat widget where long replies get cut off and look broken.
+
 If you don't know something specific about this platform's exact behavior, say
 so honestly rather than guessing.
 """
@@ -125,7 +128,7 @@ def get_chatbot_response(query: str, history: list | None = None) -> str:
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
-                max_output_tokens=300,
+                max_output_tokens=600,
                 temperature=0.4,
             ),
         )

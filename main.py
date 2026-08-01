@@ -55,12 +55,6 @@ if st.session_state.owner_authed:
     st.stop()
 
 # --- Auto-login from a saved session cookie, if we're not logged in yet ---
-# NOTE: this cookie component loads asynchronously in the browser, so on the
-# very first script run right after opening the app it may briefly return
-# None even if a valid cookie exists — the component automatically triggers
-# its own rerun once the cookie value is ready, so this check simply runs
-# again a moment later and picks it up. This can cause a very brief flash
-# of the login/home page before auto-login kicks in; that's expected.
 if not st.session_state.logged_in:
     saved_token = cookie_manager.get("auth_token")
     if saved_token:
@@ -127,7 +121,7 @@ if not st.session_state.logged_in:
             st.rerun()
 
     elif st.session_state.page == "signup":
-        signup_page()
+        signup_page(cookie_manager)
 
     elif st.session_state.page == "login":
         login_page(cookie_manager)

@@ -100,6 +100,35 @@ def get_user_by_session_token(token: str):
     return dict(row) if row else None
 
 
+def get_user_by_email(email: str):
+    """
+    Looks up a user by email. Returns a user dict (same shape as
+    authenticate_user) or None if no account exists with that email.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+
+def update_user_password(user_id: int, new_password: str):
+    """
+    Hashes the new password with bcrypt and updates it for the given
+    user_id. Also invalidates all existing session tokens for that user,
+    so old "remember me" logins are forced to re-authenticate after a
+    password reset (security best practice).
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET password_hash = ? WHERE id = ?",
+        (hash_password(new_password), user_id),
+    )
+    cursor.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
 def delete_session_token(token: str):
     """Removes a session token from the DB (used on logout)."""
     if not token:

@@ -100,6 +100,7 @@ def render_chat_bubble():
                     label_visibility="collapsed",
                     placeholder="Type your question...",
                 )
+                
                 send_clicked = st.button(
                     "Send", key="bubble_send_btn", use_container_width=True, type="primary"
                 )
@@ -107,9 +108,10 @@ def render_chat_bubble():
                 if send_clicked and user_msg.strip():
                     msg = user_msg.strip()
                     st.session_state.chat_history.append({"role": "user", "text": msg})
-                    reply = get_chatbot_response(msg, st.session_state.chat_history[:-1])
+                    with st.spinner("Thinking..."):
+                        reply = get_chatbot_response(msg, st.session_state.chat_history[:-1])
                     st.session_state.chat_history.append({"role": "model", "text": reply})
-                    st.session_state.chat_input_counter += 1  # fresh key clears the box
+                    st.session_state.chat_input_counter += 1
                     st.rerun()
 
                 if st.session_state.chat_history:
