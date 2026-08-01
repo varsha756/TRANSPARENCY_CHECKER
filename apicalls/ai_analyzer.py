@@ -8,7 +8,7 @@ import google.generativeai as genai
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MODEL = "gemini-3.6-flash"
 
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
