@@ -99,6 +99,7 @@ def _call_gemini(system_prompt: str, user_content: str, max_tokens: int = 2048) 
         generation_config=genai.types.GenerationConfig(
             max_output_tokens=max_tokens,
             temperature=0.2,
+            response_mime_type="application/json",
         ),
     )
     if not response.text:

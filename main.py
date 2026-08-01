@@ -1,11 +1,13 @@
 import streamlit as st
 from streamlit_lottie import st_lottie
 import requests
+import extra_streamlit_components as stx
 
 # --- Local imports ---
 from config.database import init_db
 from auth.signup import signup_page
 from auth.login import login_page
+from services.auth_service import get_user_by_session_token, delete_session_token
 from streamlit_multipage.ngo_dashboard import ngo_dashboard
 from streamlit_multipage.donor_home import donor_home   # donor main dashboard
 from streamlit_multipage.donor_dashboard import donor_dashboard  # NGO search
@@ -13,7 +15,6 @@ from streamlit_multipage.donor_report import donor_reports
 from streamlit_multipage.market import market
 from services.report_service import get_all_org_scores
 from streamlit_multipage.donation import donation
-from config.database import init_db
 from config.ngo_database import init_ngo_db
 from streamlit_multipage.donor_chatbot import donor_chatbot
 from streamlit_multipage.campaigns import campaigns_page
@@ -32,6 +33,44 @@ if "page" not in st.session_state:
     st.session_state.page = "home"
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+if "owner_authed" not in st.session_state:
+    st.session_state.owner_authed = False
+
+# --- Cookie manager: powers "stay logged in" across browser restarts ---
+cookie_manager = stx.CookieManager(key="cookie_manager")
+
+# --- Hidden admin route: visit the app URL with ?admin=1 to reach this.
+# Not linked anywhere in the normal UI — password-protected via secrets.
+if st.query_params.get("admin") == "1":
+    from auth.auth_owner import admin_page
+    admin_page()
+    st.stop()
+
+# --- Owner panel: reached via the "Owner Access" button on the donor
+# dashboard sidebar (not a URL trick). Once owner_authed is True, this
+# takes over the whole page regardless of donor login state.
+if st.session_state.owner_authed:
+    from admin.owner_login import owner_panel
+    owner_panel()
+    st.stop()
+
+# --- Auto-login from a saved session cookie, if we're not logged in yet ---
+# NOTE: this cookie component loads asynchronously in the browser, so on the
+# very first script run right after opening the app it may briefly return
+# None even if a valid cookie exists — the component automatically triggers
+# its own rerun once the cookie value is ready, so this check simply runs
+# again a moment later and picks it up. This can cause a very brief flash
+# of the login/home page before auto-login kicks in; that's expected.
+if not st.session_state.logged_in:
+    saved_token = cookie_manager.get("auth_token")
+    if saved_token:
+        auto_user = get_user_by_session_token(saved_token)
+        if auto_user:
+            st.session_state["logged_in"] = True
+            st.session_state["user"] = auto_user
+            st.session_state["user_id"] = auto_user["id"]
+            st.session_state["role"] = auto_user["role"]
+            st.rerun()
 
 # --- Cached Lottie loader ---
 @st.cache_data
@@ -44,15 +83,34 @@ def load_lottieurl(url: str):
     except requests.exceptions.RequestException:
         return None
 
+
+def do_logout():
+    """Clears the server-side session, deletes the DB session token, and
+    removes the browser cookie so the user is fully logged out everywhere."""
+    token = cookie_manager.get("auth_token")
+    if token:
+        delete_session_token(token)
+        cookie_manager.delete("auth_token", key="delete_auth_token_cookie")
+    st.session_state.clear()
+    st.rerun()
+
+
 # ======================================================
 # NOT LOGGED IN
 # ======================================================
 if not st.session_state.logged_in:
-    # Hide sidebar
-    st.markdown(
-        """<style>[data-testid="stSidebar"] {display: none;}</style>""",
-        unsafe_allow_html=True
-    )
+    st.sidebar.title("Navigation")
+
+    nav_labels = ["Home", "Login", "Signup"]
+    label_to_page = {"Home": "home", "Login": "login", "Signup": "signup"}
+    page_to_label = {v: k for k, v in label_to_page.items()}
+
+    current_label = page_to_label.get(st.session_state.page, "Home")
+    nav_choice = st.sidebar.radio("Go to", nav_labels, index=nav_labels.index(current_label))
+
+    if label_to_page[nav_choice] != st.session_state.page:
+        st.session_state.page = label_to_page[nav_choice]
+        st.rerun()
 
     if st.session_state.page == "home":
         st.title("🌍 Donation Transparency Checker")
@@ -70,15 +128,9 @@ if not st.session_state.logged_in:
 
     elif st.session_state.page == "signup":
         signup_page()
-        if st.button("Already have an account? Login"):
-            st.session_state.page = "login"
-            st.rerun()
 
     elif st.session_state.page == "login":
-        login_page()
-        if st.button("Need an account? Sign up"):
-            st.session_state.page = "signup"
-            st.rerun()
+        login_page(cookie_manager)
 
 # ======================================================
 # LOGGED IN
@@ -89,6 +141,12 @@ else:
 
     st.sidebar.title("Navigation")
     st.sidebar.write(f"Logged in as: **{user['username']}** ({role})")
+
+    if role != "ngo":
+        st.sidebar.divider()
+        with st.sidebar.expander("🔒 Owner Access"):
+            from auth.auth_owner import owner_login_form
+            owner_login_form()
 
     if role == "ngo":
         ngo_pages = ["Dashboard", "Upload Report"]
@@ -102,8 +160,7 @@ else:
             st.rerun()
 
         if st.sidebar.button("Logout"):
-            st.session_state.clear()
-            st.rerun()
+            do_logout()
 
         if st.session_state.page == "Dashboard":
             ngo_dashboard()
@@ -128,8 +185,7 @@ else:
                 st.rerun()
 
             if st.sidebar.button("Logout"):
-                st.session_state.clear()
-                st.rerun()
+                do_logout()
 
         if st.session_state.page == "Dashboard":
             donor_home()

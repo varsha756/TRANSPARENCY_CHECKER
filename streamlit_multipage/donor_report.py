@@ -154,18 +154,23 @@ def donor_reports():
                     f"It is an interpretive summary of the NGO's self-submitted report, "
                     f"not an independently verified audit."
                 )
-                report_pdf = generate_transparency_report_pdf(
-                org, report_row, org["total_amount"], org["donation_count"],
-                usage_summary if report_row else "No AI usage summary available yet."
-            )
-            st.download_button(
-                "Download Transparency Report",
-                data=report_pdf,
-                file_name=f"{org['org_name'].replace(' ', '_')}_transparency_report.pdf",
-                mime="application/pdf",
-                key=f"report_{org_id}",
-            )
 
+                # NOTE: moved inside this `else` block (report_row exists here) —
+                # this is what fixes the UnboundLocalError. report_pdf is only
+                # ever built/downloaded when there IS a report to build it from.
+                report_pdf = generate_transparency_report_pdf(
+                    org, report_row, org["total_amount"], org["donation_count"],
+                    usage_summary,
+                )
+                st.download_button(
+                    "Download Transparency Report",
+                    data=report_pdf,
+                    file_name=f"{org['org_name'].replace(' ', '_')}_transparency_report.pdf",
+                    mime="application/pdf",
+                    key=f"report_{org_id}",
+                )
+
+            # ---- Certificate: doesn't require a report, always available ----
             cert_pdf = generate_certificate_pdf(
                 st.session_state["user"].get("username", "Donor"), org["org_name"], org["total_amount"]
             )

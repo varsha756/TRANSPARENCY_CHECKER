@@ -7,3 +7,4 @@ reportlab
 python-dotenv
 google-generativeai
 google-genai
+extra-streamlit-components

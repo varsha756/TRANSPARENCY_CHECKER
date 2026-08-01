@@ -1,17 +1,20 @@
 import os
 import random
+import logging
 from dotenv import load_dotenv
-import google.generativeai as genai
-
+from google import genai
+from google.genai import types
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GEMINI_MODEL = "gemini-3.6-flash"
 
 _client = None
 if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
+    _client = genai.Client(api_key=GOOGLE_API_KEY)
 
 
 # Basic project info points
@@ -54,14 +57,6 @@ If you don't know something specific about this platform's exact behavior, say
 so honestly rather than guessing.
 """
 
-# Build the model with the system prompt attached (system_instruction is
-# supported directly on GenerativeModel in the google-generativeai SDK).
-if GOOGLE_API_KEY:
-    _client = genai.GenerativeModel(
-        model_name=GEMINI_MODEL,
-        system_instruction=SYSTEM_PROMPT,
-    )
-
 
 def _is_greeting(text: str) -> bool:
     words = text.lower().strip().strip("!.?").split()
@@ -75,7 +70,7 @@ def _greeting_response() -> str:
 
 
 def _rule_based_response(query: str) -> str:
-    """Keyword-matching fallback used when Gemini is unavailable."""
+    """Keyword-matching fallback used when Gemini is unavailable or errors out."""
     if _is_greeting(query):
         return _greeting_response()
 
@@ -94,8 +89,9 @@ def _rule_based_response(query: str) -> str:
 
 def get_chatbot_response(query: str, history: list | None = None) -> str:
     """
-    Returns a chatbot reply. Uses Gemini if configured; otherwise falls back
-    to simple keyword-based FAQ matching so the chat still works with zero setup.
+    Returns a chatbot reply. Uses Gemini (new google-genai SDK) if configured;
+    otherwise falls back to simple keyword-based FAQ matching so the chat still
+    works with zero setup.
 
     A plain greeting ("hi"/"hello"/etc) always shows the project-info intro
     directly, whether or not Gemini is configured — no need to burn an API
@@ -108,27 +104,41 @@ def get_chatbot_response(query: str, history: list | None = None) -> str:
         return _greeting_response()
 
     if not _client:
+        logger.warning("Gemini client not configured (missing GOOGLE_API_KEY) — using rule-based fallback.")
         return _rule_based_response(query)
 
     try:
-        # Old-SDK multi-turn format: list of {"role": ..., "parts": [text]} dicts
+        # New SDK multi-turn format: list of Content objects, each with a role
+        # and one or more Parts.
         contents = []
         for turn in (history or []):
             role = "user" if turn.get("role") == "user" else "model"
-            contents.append({"role": role, "parts": [turn.get("text", "")]})
-        contents.append({"role": "user", "parts": [query]})
+            contents.append(
+                types.Content(role=role, parts=[types.Part.from_text(text=turn.get("text", ""))])
+            )
+        contents.append(
+            types.Content(role="user", parts=[types.Part.from_text(text=query)])
+        )
 
-        response = _client.generate_content(
-            contents,
-            generation_config=genai.types.GenerationConfig(
+        response = _client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
                 max_output_tokens=300,
                 temperature=0.4,
             ),
         )
-        if response.text and response.text.strip():
-            return response.text.strip()
+
+        text = (response.text or "").strip()
+        if text:
+            return text
+
+        logger.warning("Gemini returned an empty response for query: %r", query)
         return _rule_based_response(query)
 
-    except Exception:
-        # Any API hiccup silently falls back rather than breaking the chat
+    except Exception as e:
+        # Log the real error so failures are visible in Streamlit Cloud logs
+        # instead of silently degrading to the rule-based fallback forever.
+        logger.exception("Gemini API call failed for query %r: %s", query, e)
         return _rule_based_response(query)

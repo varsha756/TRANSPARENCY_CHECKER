@@ -121,6 +121,20 @@ def init_db():
         searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
 """)
+
+    # NEW: persistent-login session tokens. A row here backs a browser
+    # cookie so a user stays logged in after closing/reopening the app,
+    # instead of losing their account and having to sign up again.
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS sessions (
+        token TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        expires_at INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+""")
+
     conn.commit()
     conn.close()
     print(f"[DB INIT] all tables ensured at: {DB_PATH}")
