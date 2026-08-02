@@ -8,8 +8,12 @@ def signup_page(cookie_manager):
 
     role = "donor"
 
+    # If the user got here because login couldn't find their account,
+    # pre-fill the email they typed so they don't have to re-enter it.
+    prefill_email = st.session_state.pop("signup_prefill_email", "")
+
     username = st.text_input("Username")
-    email = st.text_input("Email")
+    email = st.text_input("Email", value=prefill_email)
     password = st.text_input("Password", type="password")
     confirm = st.text_input("Confirm Password", type="password")
 

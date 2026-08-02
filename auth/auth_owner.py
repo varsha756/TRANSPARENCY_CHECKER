@@ -1,6 +1,21 @@
 import streamlit as st
 
 
+def admin_page():
+    """
+    The page shown at yourapp.streamlit.app/?admin=1 — the ONLY entry
+    point to owner login. Not linked anywhere in the normal UI.
+
+    If already owner_authed, this won't even be reached (main.py checks
+    owner_authed before this route), but we guard anyway just in case
+    someone lands here after already being authed.
+    """
+    # main.py checks owner_authed BEFORE this function ever runs and shows
+    # owner_panel() directly in that case, so this function only executes
+    # when the owner is not yet logged in — just show the login form.
+    owner_login_form()
+
+
 def owner_login_form():
     """
     Renders the owner login form. On successful match against

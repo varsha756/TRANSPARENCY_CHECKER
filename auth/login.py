@@ -30,26 +30,35 @@ def login_page(cookie_manager):
             st.rerun()
 
     if st.button("Log In", use_container_width=True):
-        success, user = authenticate_user(email, password)
-        if success:
-            st.session_state["logged_in"] = True
-            st.session_state["user"] = user
-            st.session_state["user_id"] = user["id"]
-            st.session_state["role"] = user["role"]
-
-            if remember_me:
-                token = create_session_token(user["id"])
-                cookie_manager.set(
-                    "auth_token",
-                    token,
-                    expires_at=datetime.datetime.now() + datetime.timedelta(days=30),
-                    key="set_auth_token_cookie",
-                )
-
-            st.success(f"Welcome back, {user['username']}!")
+        if not email:
+            st.error("Please enter your email.")
+        elif get_user_by_email(email) is None:
+            # No account with this email at all -> send them straight to signup
+            st.info("No account found with that email. Let's create one.")
+            st.session_state["signup_prefill_email"] = email
+            st.session_state["page"] = "signup"
             st.rerun()
         else:
-            st.error("Invalid email or password.")
+            success, user = authenticate_user(email, password)
+            if success:
+                st.session_state["logged_in"] = True
+                st.session_state["user"] = user
+                st.session_state["user_id"] = user["id"]
+                st.session_state["role"] = user["role"]
+
+                if remember_me:
+                    token = create_session_token(user["id"])
+                    cookie_manager.set(
+                        "auth_token",
+                        token,
+                        expires_at=datetime.datetime.now() + datetime.timedelta(days=30),
+                        key="set_auth_token_cookie",
+                    )
+
+                st.success(f"Welcome back, {user['username']}!")
+                st.rerun()
+            else:
+                st.error("Incorrect password. Please try again.")
 
     st.markdown("---")
     col1, col2 = st.columns([3, 1])

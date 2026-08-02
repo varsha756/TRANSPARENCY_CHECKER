@@ -39,19 +39,20 @@ if "owner_authed" not in st.session_state:
 # --- Cookie manager: powers "stay logged in" across browser restarts ---
 cookie_manager = stx.CookieManager(key="cookie_manager")
 
-# --- Hidden admin route: visit the app URL with ?admin=1 to reach this.
-# Not linked anywhere in the normal UI — password-protected via secrets.
-if st.query_params.get("admin") == "1":
-    from auth.auth_owner import admin_page
-    admin_page()
-    st.stop()
-
-# --- Owner panel: reached via the "Owner Access" button on the donor
-# dashboard sidebar (not a URL trick). Once owner_authed is True, this
-# takes over the whole page regardless of donor login state.
+# --- Owner panel: if already owner_authed, always show it — regardless
+# of whether ?admin=1 is in the URL. This takes over the whole page
+# regardless of donor/NGO login state.
 if st.session_state.owner_authed:
     from admin.owner_login import owner_panel
     owner_panel()
+    st.stop()
+
+# --- Hidden admin route: visit the app URL with ?admin=1 to reach this.
+# Not linked anywhere in the normal UI — password-protected via secrets.
+# Only reached when NOT already owner_authed (see check above).
+if st.query_params.get("admin") == "1":
+    from auth.auth_owner import admin_page
+    admin_page()
     st.stop()
 
 # --- Auto-login from a saved session cookie, if we're not logged in yet ---
@@ -93,18 +94,10 @@ def do_logout():
 # NOT LOGGED IN
 # ======================================================
 if not st.session_state.logged_in:
-    st.sidebar.title("Navigation")
-
-    nav_labels = ["Home", "Login", "Signup"]
-    label_to_page = {"Home": "home", "Login": "login", "Signup": "signup"}
-    page_to_label = {v: k for k, v in label_to_page.items()}
-
-    current_label = page_to_label.get(st.session_state.page, "Home")
-    nav_choice = st.sidebar.radio("Go to", nav_labels, index=nav_labels.index(current_label))
-
-    if label_to_page[nav_choice] != st.session_state.page:
-        st.session_state.page = label_to_page[nav_choice]
-        st.rerun()
+    # No sidebar navigation here anymore. Flow is strictly:
+    # home -> login -> (if no account) signup -> donor_home
+    if st.session_state.page not in ("home", "login", "signup"):
+        st.session_state.page = "home"
 
     if st.session_state.page == "home":
         st.title("🌍 Donation Transparency Checker")
@@ -116,15 +109,15 @@ if not st.session_state.logged_in:
 
         st.write("This tool helps you verify how donations are being used.")
 
-        if st.button("➡️ Get Started"):
-            st.session_state.page = "signup"
+        if st.button("➡️ Login"):
+            st.session_state.page = "login"
             st.rerun()
-
-    elif st.session_state.page == "signup":
-        signup_page(cookie_manager)
 
     elif st.session_state.page == "login":
         login_page(cookie_manager)
+
+    elif st.session_state.page == "signup":
+        signup_page(cookie_manager)
 
 # ======================================================
 # LOGGED IN
@@ -135,12 +128,6 @@ else:
 
     st.sidebar.title("Navigation")
     st.sidebar.write(f"Logged in as: **{user['username']}** ({role})")
-
-    if role != "ngo":
-        st.sidebar.divider()
-        with st.sidebar.expander("🔒 Owner Access"):
-            from auth.auth_owner import owner_login_form
-            owner_login_form()
 
     if role == "ngo":
         ngo_pages = ["Dashboard", "Upload Report"]

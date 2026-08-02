@@ -13,9 +13,24 @@ def init_ngo_db():
     as database.py, but never touches users / organizations / donations /
     reports / scores / viewed_orgs / money_usage_reports — those stay
     exactly as defined in database.py.
+
+    The one exception: we extend the existing `organizations` table with
+    a few extra columns (email, category, contact_phone, description)
+    needed for owner-side NGO registration. These are added via ALTER
+    TABLE, guarded by _column_exists, so existing rows/dbs aren't broken.
     """
     conn = get_connection()
     cursor = conn.cursor()
+
+    # --- Extend organizations with fields needed for owner registration ---
+    if not _column_exists(cursor, "organizations", "email"):
+        cursor.execute("ALTER TABLE organizations ADD COLUMN email TEXT")
+    if not _column_exists(cursor, "organizations", "category"):
+        cursor.execute("ALTER TABLE organizations ADD COLUMN category TEXT")
+    if not _column_exists(cursor, "organizations", "contact_phone"):
+        cursor.execute("ALTER TABLE organizations ADD COLUMN contact_phone TEXT")
+    if not _column_exists(cursor, "organizations", "description"):
+        cursor.execute("ALTER TABLE organizations ADD COLUMN description TEXT")
 
     # Campaigns created by an NGO. Must be approved (status='approved') by
     # the platform admin before it can appear on the donor page.
@@ -52,7 +67,7 @@ def init_ngo_db():
 
     conn.commit()
     conn.close()
-    print("[NGO DB INIT] campaigns + campaign_donations ensured")
+    print("[NGO DB INIT] campaigns + campaign_donations ensured, organizations extended")
 
 
 if __name__ == "__main__":

@@ -46,6 +46,10 @@ red_flags should be short, concrete phrases, e.g.:
 
 If the text is empty, unreadable, or clearly not a financial report,
 return transparency_score: 0 and a red flag stating that.
+
+IMPORTANT: Keep your response compact. Output ONLY the JSON object with
+no extra commentary before or after it, so the full object fits well
+within the available output length.
 """
 
 MONEY_USAGE_SYSTEM_PROMPT = """You are a donor-transparency assistant. You will be given:
@@ -69,11 +73,20 @@ Rules:
 {
   "usage_summary": "<3-5 sentence explanation>"
 }
+
+IMPORTANT: Keep your response compact — the usage_summary should be at
+most 5 sentences. Output ONLY the JSON object with no extra commentary
+before or after it, so the full object fits well within the available
+output length.
 """
 
 
 def _extract_json(raw_text: str) -> dict:
-    """Best-effort extraction of a JSON object from the model's reply."""
+    """Best-effort extraction of a JSON object from the model's reply.
+
+    Handles the common truncation case (response cut off before the
+    closing brace) by attempting to repair the JSON before giving up.
+    """
     raw_text = raw_text.strip()
     if raw_text.startswith("```"):
         raw_text = raw_text.strip("`")
@@ -81,11 +94,39 @@ def _extract_json(raw_text: str) -> dict:
             raw_text = raw_text[4:].strip()
 
     start = raw_text.find("{")
-    end = raw_text.rfind("}")
-    if start == -1 or end == -1:
+    if start == -1:
         raise ValueError("No JSON object found in AI response")
 
-    return json.loads(raw_text[start:end + 1])
+    end = raw_text.rfind("}")
+
+    if end != -1 and end > start:
+        candidate = raw_text[start:end + 1]
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass  # fall through to repair attempt below
+
+    # No valid closing brace, or the slice wasn't valid JSON — the
+    # response was likely truncated mid-generation. Try progressively
+    # closing it: strip a trailing incomplete key/value and append
+    # enough closing characters to make it parseable.
+    fragment = raw_text[start:]
+    for cut_point in range(len(fragment), 0, -1):
+        candidate = fragment[:cut_point].rstrip()
+        candidate = candidate.rstrip(",")
+        repaired = candidate
+        if repaired.count('"') % 2 == 1:
+            repaired += '"'
+        open_braces = repaired.count("{") - repaired.count("}")
+        open_brackets = repaired.count("[") - repaired.count("]")
+        repaired += "]" * max(open_brackets, 0)
+        repaired += "}" * max(open_braces, 0)
+        try:
+            return json.loads(repaired)
+        except json.JSONDecodeError:
+            continue
+
+    raise ValueError("No JSON object found in AI response")
 
 
 def _call_gemini(system_prompt: str, user_content: str, max_tokens: int = 2048) -> str:
@@ -137,7 +178,7 @@ def analyze_report_with_ai(extracted_text: str) -> dict:
         raw_reply = _call_gemini(
             SYSTEM_PROMPT,
             f"Here is the extracted report text:\n\n{trimmed_text}",
-            max_tokens=2048,
+            max_tokens=3072,
         )
         parsed = _extract_json(raw_reply)
 
@@ -185,7 +226,7 @@ def analyze_money_usage(org_name: str, extracted_text: str, donation_amount: flo
     )
 
     try:
-        raw_reply = _call_gemini(MONEY_USAGE_SYSTEM_PROMPT, user_content, max_tokens=1024)
+        raw_reply = _call_gemini(MONEY_USAGE_SYSTEM_PROMPT, user_content, max_tokens=2048)
         parsed = _extract_json(raw_reply)
         summary = str(parsed.get("usage_summary", "")).strip()
         return {"usage_summary": summary or "AI could not generate a usage summary from this report."}
